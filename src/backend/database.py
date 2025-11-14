@@ -10,6 +10,7 @@ client = MongoClient('mongodb://localhost:27017/')
 db = client['mergington_high']
 activities_collection = db['activities']
 teachers_collection = db['teachers']
+announcements_collection = db['announcements']
 
 # Methods
 
@@ -49,6 +50,81 @@ def init_database():
         for teacher in initial_teachers:
             teachers_collection.insert_one(
                 {"_id": teacher["username"], **teacher})
+
+    # Initialize announcements if empty
+    if announcements_collection.count_documents({}) == 0:
+        # Example announcement: expires at end of current month
+        from datetime import datetime, timedelta
+
+        now = datetime.utcnow()
+        # Set expires_at to 7 days from now as a sensible default example
+        example_expires = now + timedelta(days=7)
+
+        example = {
+            # let Mongo generate an _id
+            "message": "Welcome back! Clubs and activities registration is open.",
+            "start_date": None,
+            "expires_at": example_expires,
+            "created_at": now,
+        }
+
+        announcements_collection.insert_one(example)
+
+
+# Helper functions for announcements
+def list_announcements(include_expired: bool = False):
+    """Return list of announcements. By default only non-expired ones."""
+    from datetime import datetime
+
+    query = {}
+    if not include_expired:
+        query["$or"] = [
+            {"expires_at": {"$gt": datetime.utcnow()}},
+            {"expires_at": None},
+        ]
+
+    items = []
+    for a in announcements_collection.find(query).sort([("created_at", -1)]):
+        a["id"] = str(a.pop("_id"))
+        items.append(a)
+    return items
+
+
+def get_announcement(announcement_id):
+    from bson import ObjectId
+
+    a = announcements_collection.find_one({"_id": ObjectId(announcement_id)})
+    if not a:
+        return None
+    a["id"] = str(a.pop("_id"))
+    return a
+
+
+def create_announcement(message: str, expires_at=None, start_date=None):
+    from datetime import datetime
+    doc = {
+        "message": message,
+        "start_date": start_date,
+        "expires_at": expires_at,
+        "created_at": datetime.utcnow(),
+    }
+    result = announcements_collection.insert_one(doc)
+    return str(result.inserted_id)
+
+
+def update_announcement(announcement_id, message=None, expires_at=None, start_date=None):
+    from bson import ObjectId
+    update = {k: v for k, v in (("message", message), ("expires_at", expires_at), ("start_date", start_date)) if v is not None}
+    if not update:
+        return False
+    result = announcements_collection.update_one({"_id": ObjectId(announcement_id)}, {"$set": update})
+    return result.modified_count > 0
+
+
+def delete_announcement(announcement_id):
+    from bson import ObjectId
+    result = announcements_collection.delete_one({"_id": ObjectId(announcement_id)})
+    return result.deleted_count > 0
 
 
 # Initial database if empty
