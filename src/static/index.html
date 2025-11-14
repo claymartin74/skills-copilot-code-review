@@ -26,6 +26,9 @@
             <button id="logout-button">Logout</button>
           </div>
         </div>
+        <div id="announcement-controls">
+          <button id="manage-announcements-button" class="icon-button hidden">📣 Manage Announcements</button>
+        </div>
       </div>
     </header>
 
@@ -135,8 +138,38 @@
     </div>
 
     <script src="app.js"></script>
-    <div class="announcement-banner">
-      📢 Activity registration is open until the end of the month. Don't lose your spot!
+    <div id="announcement-area">
+      <!-- Dynamic announcements injected here -->
+    </div>
+
+    <!-- Announcements Modal -->
+    <div id="announcements-modal" class="modal hidden">
+      <div class="modal-content">
+        <span class="close-announcements-modal">&times;</span>
+        <h3>Announcements</h3>
+        <div id="announcements-list">
+          <!-- List loaded by JS -->
+        </div>
+        <div id="announcement-form" class="announcement-form hidden">
+          <h4 id="announcement-form-title">New Announcement</h4>
+          <div class="form-group">
+            <label for="ann-message">Message</label>
+            <textarea id="ann-message" rows="3" required></textarea>
+          </div>
+          <div class="form-group">
+            <label for="ann-start">Start Date (optional)</label>
+            <input type="date" id="ann-start" />
+          </div>
+          <div class="form-group">
+            <label for="ann-expires">Expiration Date</label>
+            <input type="date" id="ann-expires" required />
+          </div>
+          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+            <button id="cancel-ann-btn" class="cancel-btn">Cancel</button>
+            <button id="save-ann-btn" class="primary-btn">Save</button>
+          </div>
+        </div>
+      </div>
     </div>
   </body>
 </html>
